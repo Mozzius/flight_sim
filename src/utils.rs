@@ -10,3 +10,7 @@ pub fn lerp_vec3(mut v0: Vec3, v1: &Vec3, t: f32) -> Vec3 {
     v0.z = lerp(v0.z, v1.z, t);
     return v0;
 }
+
+pub fn sigmoid(x: f32) -> f32 {
+    return 1.0 / (1.0 + (-x).exp());
+}

@@ -2,8 +2,8 @@ use bevy::{core::FixedTimestep, prelude::*};
 mod utils;
 
 const TIME_STEP: f32 = 1.0 / 60.0;
-const INITIAL_PLANE_ALTITUDE: f32 = 200.0;
-const INITIAL_PLANE_SPEED: f32 = 1.0;
+const INITIAL_PLANE_ALTITUDE: f32 = 500.0;
+const INITIAL_PLANE_SPEED: f32 = 20.0;
 const MINIMUM_SPEED: f32 = 1.0;
 const MAXIMUM_SPEED: f32 = 50.0;
 
@@ -18,7 +18,16 @@ struct Player {
 
 fn main() {
     App::new()
+        .insert_resource(WindowDescriptor {
+            title: "Flight Sim".to_string(),
+            ..default()
+        })
         .insert_resource(Msaa { samples: 4 })
+        .insert_resource(ClearColor(Color::rgb(
+            97.0 / 255.0,
+            195.0 / 255.0,
+            242.0 / 255.0,
+        )))
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
         .add_system_set(
@@ -31,13 +40,9 @@ fn main() {
 
 /// set up a simple 3D scene
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // note that we have to include the `Scene0` label
     let f22_raptor = asset_server.load("f22-raptor/scene.gltf#Scene0");
     let cityscape = asset_server.load("cityscape/scene.gltf#Scene0");
 
-    // to be able to position our 3d model:
-    // spawn a parent entity with a Transform and GlobalTransform
-    // and spawn our gltf as a scene under it
     commands
         .spawn_bundle((
             Transform::from_translation(Vec3::new(0.0, INITIAL_PLANE_ALTITUDE, 0.0)),
@@ -47,12 +52,6 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             speed: INITIAL_PLANE_SPEED,
         })
         .with_children(|parent| {
-            // parent.spawn_bundle(PbrBundle {
-            //     mesh: meshes.add(Mesh::from(shape::Cube { size: 10.0 })),
-            //     material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-            //     transform: Transform::from_xyz(0.0, 0.5, 0.0),
-            //     ..default()
-            // });
             // center of the plane is not at 0,0 so offset slightly
             parent
                 .spawn_bundle((
@@ -117,23 +116,21 @@ fn update_player(
     }
     if keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift) {
         if player.speed < MAXIMUM_SPEED {
-            player.speed += 0.1;
+            player.speed += 1.0;
         }
     }
 
     if keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift) {
         if player.speed > MINIMUM_SPEED {
-            player.speed -= 0.1;
+            player.speed -= 1.0;
         }
     }
 
     yaw *= 0.01;
     pitch *= 0.03;
     roll *= 0.03;
-    
-    player_transform.rotate(Quat::from_rotation_x(pitch));
-    player_transform.rotate(Quat::from_rotation_y(yaw));
-    player_transform.rotate(Quat::from_rotation_z(roll));
+
+    player_transform.rotate(Quat::from_euler(EulerRot::XYZ, pitch, yaw, roll));
 
     // player_transform.rotation.slerp(current_rotation * Vec3::Y, 0.5);
 
@@ -155,17 +152,5 @@ fn update_player(
             .mul_vec3(Vec3::new(CAMERA_X, 0.0, CAMERA_Z))
         + Vec3::new(0.0, CAMERA_Y, 0.0);
 
-    // camera.translation.lerp(
-    //     player_transform.translation + Vec3::new(CAMERA_X, CAMERA_Y, CAMERA_Z),
-    //     1.0,
-    // );
-
     camera.look_at(player_transform.translation + (forwards * 100.0), Vec3::Y);
-
-    // camera.rotation = camera.rotation.slerp(
-    //     player_transform
-    //         .rotation
-    //         .mul_quat(Quat::from_rotation_y(-std::f32::consts::FRAC_PI_2)),
-    //     0.1,
-    // );
 }
