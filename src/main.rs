@@ -2,10 +2,14 @@ use bevy::{core::FixedTimestep, prelude::*};
 mod utils;
 
 const TIME_STEP: f32 = 1.0 / 60.0;
-const INITIAL_PLANE_ALTITUDE: f32 = 500.0;
-const INITIAL_PLANE_SPEED: f32 = 20.0;
+const INITIAL_PLANE_ALTITUDE: f32 = 1000.0;
+const INITIAL_PLANE_SPEED: f32 = 0.0;
+
 const MINIMUM_SPEED: f32 = 1.0;
 const MAXIMUM_SPEED: f32 = 50.0;
+
+const MINIMUM_THRUST: f32 = 0.0;
+const MAXIMUM_THRUST: f32 = 80.0;
 
 const CAMERA_X: f32 = 0.0;
 const CAMERA_Y: f32 = 5.0;
@@ -64,7 +68,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 });
         });
 
-    commands.spawn_scene(cityscape);
+    commands
+        .spawn_bundle((
+            Transform::from_scale(Vec3::new(10.0, 10.0, 10.0)),
+            GlobalTransform::identity(),
+        ))
+        .with_children(|parent| {
+            parent.spawn_scene(cityscape);
+        });
 
     // light
     commands.spawn_bundle(DirectionalLightBundle {
@@ -97,10 +108,10 @@ fn update_player(
     let forwards = player_transform.forward();
 
     if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A) {
-        roll -= 1.0;
+        roll += 1.0;
     }
     if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D) {
-        roll += 1.0;
+        roll -= 1.0;
     }
     if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W) {
         pitch -= 1.0;
@@ -115,14 +126,14 @@ fn update_player(
         yaw -= 1.0;
     }
     if keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift) {
-        if player.speed < MAXIMUM_SPEED {
+        if player.speed < MAXIMUM_THRUST {
             player.speed += 1.0;
         }
     }
 
-    if keyboard_input.pressed(KeyCode::LShift) || keyboard_input.pressed(KeyCode::RShift) {
-        if player.speed > MINIMUM_SPEED {
-            player.speed -= 1.0;
+    if keyboard_input.pressed(KeyCode::LControl) || keyboard_input.pressed(KeyCode::RControl) {
+        if player.speed > MINIMUM_THRUST {
+            player.speed -= 0.3;
         }
     }
 
@@ -130,14 +141,22 @@ fn update_player(
     pitch *= 0.03;
     roll *= 0.03;
 
-    player_transform.rotate(Quat::from_euler(EulerRot::XYZ, pitch, yaw, roll));
-
+    // many thanks to rchar
+    let player_x = player_transform.local_x();
+    let player_y = player_transform.local_y();
+    let player_z = player_transform.local_z();
+    let rot = Quat::from_axis_angle(player_x, pitch)
+        * Quat::from_axis_angle(player_y, yaw)
+        * Quat::from_axis_angle(player_z, roll);
+    player_transform.rotate(rot);
     // player_transform.rotation.slerp(current_rotation * Vec3::Y, 0.5);
 
-    player.speed -= forwards.y * 0.1;
+    player.speed -= forwards.y * 0.2;
 
     if player.speed < MINIMUM_SPEED {
-        player.speed = MINIMUM_SPEED;
+        player.speed += 1.0;
+    } else if player.speed > MAXIMUM_SPEED {
+        player.speed -= 0.5;
     }
 
     player_transform.translation += forwards * player.speed;
@@ -146,7 +165,7 @@ fn update_player(
         player_transform.translation.y = 0.0;
     }
 
-    camera.translation = utils::lerp_vec3(camera.translation, &player_transform.translation, 0.1)
+    camera.translation = utils::lerp_vec3(camera.translation, &player_transform.translation, 0.2)
         + player_transform
             .rotation
             .mul_vec3(Vec3::new(CAMERA_X, 0.0, CAMERA_Z))
