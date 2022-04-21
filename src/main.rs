@@ -20,6 +20,9 @@ struct Player {
     speed: f32,
 }
 
+#[derive(Component)]
+struct Camera3d;
+
 fn main() {
     App::new()
         .insert_resource(WindowDescriptor {
@@ -83,20 +86,22 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     });
 
-    commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_translation(Vec3::new(
-            CAMERA_X,
-            INITIAL_PLANE_ALTITUDE + CAMERA_Y,
-            CAMERA_Z,
-        )),
-        ..default()
-    });
+    commands
+        .spawn_bundle(PerspectiveCameraBundle {
+            transform: Transform::from_translation(Vec3::new(
+                CAMERA_X,
+                INITIAL_PLANE_ALTITUDE + CAMERA_Y,
+                CAMERA_Z,
+            )),
+            ..default()
+        })
+        .insert(Camera3d);
 }
 
 fn update_player(
     keyboard_input: Res<Input<KeyCode>>,
     mut query: Query<(&mut Transform, &mut Player), With<Player>>,
-    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+    mut camera_query: Query<&mut Transform, (With<Camera3d>, Without<Player>)>,
 ) {
     let mut yaw = 0.0;
     let mut pitch = 0.0;
