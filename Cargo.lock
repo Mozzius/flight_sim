@@ -1321,6 +1321,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "279fb028e20b3c4c320317955b77c5e0c9701f05a1d309905d6fc702cdc5053e"
 
 [[package]]
+name = "flight_sim"
+version = "0.1.1"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2495,13 +2502,6 @@ dependencies = [
  "base64",
  "bitflags",
  "serde",
-]
-
-[[package]]
-name = "rsgame"
-version = "0.1.0"
-dependencies = [
- "bevy",
 ]
 
 [[package]]
