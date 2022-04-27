@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use super::Player;
+use super::{Controls, Player};
 
 #[derive(Component)]
 struct FpsText;
@@ -95,7 +95,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     text: Text {
                         sections: vec![
                             TextSection {
-                                value: "Velocity: ".to_string(),
+                                value: "Throttle: ".to_string(),
                                 style: TextStyle {
                                     font: font.clone(),
                                     font_size: 30.0,
@@ -184,9 +184,8 @@ fn stall_warning_system(
     }
 }
 
-fn speed_system(mut text_query: Query<&mut Text, With<SpeedText>>, player_query: Query<&Player>) {
-    let player = player_query.single();
+fn speed_system(mut text_query: Query<&mut Text, With<SpeedText>>, controls: Res<Controls>) {
     for mut text in text_query.iter_mut() {
-        text.sections[1].value = format!("{:.1}", player.velocity.length());
+        text.sections[1].value = format!("{:.0}", controls.thrust);
     }
 }

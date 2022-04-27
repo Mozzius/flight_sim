@@ -1325,6 +1325,7 @@ name = "flight_sim"
 version = "0.1.1"
 dependencies = [
  "bevy",
+ "rand",
 ]
 
 [[package]]

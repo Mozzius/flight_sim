@@ -1,13 +1,14 @@
 use bevy::{core::FixedTimestep, prelude::*};
 
 use super::utils;
-use super::{Camera3d, Controls, Player};
+use super::{Ally, Camera3d, Controls, Player};
 
 const TIME_STEP: f32 = 1.0 / 60.0;
 const INITIAL_PLANE_ALTITUDE: f32 = 1000.0;
 
 const MINIMUM_THRUST: f32 = 0.0;
-const MAXIMUM_THRUST: f32 = 80.0;
+const MAXIMUM_THRUST: f32 = 75.0;
+const AFTERBURNER_THRUST: f32 = 100.0;
 
 const CAMERA_X: f32 = 0.0;
 const CAMERA_Y: f32 = 5.0;
@@ -37,6 +38,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             GlobalTransform::identity(),
         ))
         .insert(Player::default())
+        .insert(Ally)
         .with_children(|parent| {
             // center of the plane is not at 0,0 so offset slightly
             parent
@@ -85,7 +87,13 @@ fn controls_system(keyboard_input: Res<Input<KeyCode>>, mut controls: ResMut<Con
     controls.yaw = utils::lerp(controls.yaw, yaw, 0.1);
     controls.pitch = utils::lerp(controls.pitch, pitch, 0.1);
     controls.roll = utils::lerp(controls.roll, roll, 0.1);
-    controls.thrust = utils::clamp(thrust, MINIMUM_THRUST, MAXIMUM_THRUST);
+    controls.thrust = utils::clamp(controls.thrust + thrust, MINIMUM_THRUST, AFTERBURNER_THRUST);
+
+    if thrust != 1.0 && controls.thrust > MAXIMUM_THRUST {
+        controls.thrust -= 0.5
+    }
+
+    controls.airbrakes = thrust == -1.0 && controls.thrust == 0.0;
 }
 
 fn plane_system(
@@ -117,18 +125,30 @@ fn plane_system(
     player_transform.rotate(rot);
 
     // thrust
-    player.velocity += forwards * (controls.thrust.powf(1.0 / 4.0) * 0.3);
+    let speed = player.velocity.length_squared();
+    let thrust = if controls.thrust > MAXIMUM_THRUST {
+        MAXIMUM_THRUST + (controls.thrust - MAXIMUM_THRUST).powf(2.0)
+    } else {
+        controls.thrust
+    };
+
+    player.velocity += (forwards * (thrust)) / speed;
+
+    // airbrakes
+    if controls.airbrakes {
+        let velocity_norm = player.velocity.normalize_or_zero();
+        player.velocity -= velocity_norm * 0.1;
+    }
 
     // nudge velocity vector towards the forwards vector
-    player.velocity = utils::lerp_vec3(
-        player.velocity,
+    player.velocity = player.velocity.lerp(
         player_transform.forward() * player.velocity.length(),
         utils::clamp(axis_deviance, 0.1, 1.0) * 0.05,
     );
 
     // drag
     // should be done depending on axis
-    player.velocity *= utils::clamp(axis_deviance, 0.99, 1.0);
+    player.velocity *= utils::clamp(axis_deviance + 0.3, 0.99, 1.0);
 
     // gravity
     player.velocity += Vec3::new(0.0, GRAVITY, 0.0);
@@ -146,7 +166,7 @@ fn plane_system(
         player_transform.translation.y = 0.0;
     }
 
-    camera.translation = utils::lerp_vec3(camera.translation, player_transform.translation, 0.2)
+    camera.translation = camera.translation.lerp(player_transform.translation, 0.2)
         + player_transform
             .rotation
             .mul_vec3(Vec3::new(CAMERA_X, 0.0, CAMERA_Z))

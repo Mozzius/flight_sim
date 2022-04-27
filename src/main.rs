@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+mod ai;
 mod hud;
 mod plane;
 mod utils;
@@ -12,6 +13,7 @@ pub struct Controls {
     yaw: f32,
     roll: f32,
     thrust: f32,
+    airbrakes: bool,
 }
 
 impl Default for Controls {
@@ -20,7 +22,8 @@ impl Default for Controls {
             pitch: 0.0,
             yaw: 0.0,
             roll: 0.0,
-            thrust: 0.0,
+            thrust: 50.0,
+            airbrakes: false,
         }
     }
 }
@@ -39,6 +42,29 @@ impl Default for Player {
         }
     }
 }
+
+#[derive(Component)]
+pub struct AI {
+    health: f32,
+    velocity: Vec3,
+    target: Option<Entity>,
+}
+
+impl Default for AI {
+    fn default() -> Self {
+        AI {
+            health: 100.0,
+            velocity: Vec3::new(0.0, 0.0, -1.0),
+            target: None,
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct Ally;
+
+#[derive(Component)]
+pub struct Enemy;
 
 #[derive(Component)]
 pub struct Camera3d;
@@ -63,6 +89,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(hud::HUDPlugin)
         .add_plugin(plane::PlanePlugin)
+        .add_plugin(ai::AIPlugin)
         .add_startup_system(setup)
         .run();
 }
