@@ -79,19 +79,15 @@ fn ally_targeting_system(
     enemies: Query<(Entity, &Transform), (With<Enemy>, Without<Ally>)>,
 ) {
     for (transform, mut ai) in allies.iter_mut() {
-        let mut targets = Vec::new();
+        if ai.target == None {
+            let mut targets = Vec::new();
 
-        for (target, target_transform) in enemies.iter() {
-            targets.push((target, target_transform));
+            for (target, target_transform) in enemies.iter() {
+                targets.push((target, target_transform));
+            }
+
+            ai.target = utils::find_closest_target(targets, transform.translation)
         }
-
-        let target: Option<Entity> = if ai.target == None {
-            utils::find_closest_target(targets, transform.translation)
-        } else {
-            ai.target.clone()
-        };
-
-        ai.target = target;
     }
 }
 
@@ -100,19 +96,15 @@ fn enemy_targeting_system(
     mut enemies: Query<(&Transform, &mut AI), (With<Enemy>, Without<Ally>)>,
 ) {
     for (transform, mut ai) in enemies.iter_mut() {
-        let mut targets = Vec::new();
+        if ai.target == None {
+            let mut targets = Vec::new();
 
-        for (target, target_transform) in allies.iter() {
-            targets.push((target, target_transform));
+            for (target, target_transform) in allies.iter() {
+                targets.push((target, target_transform));
+            }
+
+            ai.target = utils::find_closest_target(targets, transform.translation)
         }
-
-        let target: Option<Entity> = if ai.target == None {
-            utils::find_closest_target(targets, transform.translation)
-        } else {
-            ai.target.clone()
-        };
-
-        ai.target = target;
     }
 }
 
@@ -145,7 +137,7 @@ fn enemy_ai_system(
 
         if let Some(target) = ai.target {
             if let Ok(transform) = targets.get(target) {
-                target_vec = transform.translation.clone()
+                target_vec = transform.translation.clone() + transform.forward() * -100.0
             } else {
                 error!("Target not found!");
                 ai.target = None;

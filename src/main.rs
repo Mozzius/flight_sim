@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_atmosphere::*;
 
 mod ai;
 mod hud;
@@ -76,17 +77,20 @@ fn main() {
             ..default()
         })
         .insert_resource(Msaa { samples: 4 })
-        .insert_resource(ClearColor(Color::rgb(
-            97.0 / 255.0,
-            195.0 / 255.0,
-            242.0 / 255.0,
-        )))
+        .insert_resource(bevy_atmosphere::AtmosphereMat {
+            sun_position: Vec3::new(4.0, 10.0, 10.0),
+            ..default()
+        })
         .insert_resource(Controls::default())
         .insert_resource(AmbientLight {
             color: Color::WHITE,
             brightness: 1.0 / 5.0,
         })
         .add_plugins(DefaultPlugins)
+        .add_plugin(bevy_atmosphere::AtmospherePlugin {
+            dynamic: false,
+            sky_radius: 1000000.0,
+        })
         .add_plugin(hud::HUDPlugin)
         .add_plugin(plane::PlanePlugin)
         .add_plugin(ai::AIPlugin)
@@ -109,7 +113,11 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // light
     commands.spawn_bundle(DirectionalLightBundle {
-        transform: Transform::from_xyz(4.0, 0.0, 10.0),
+        transform: Transform::from_xyz(4.0, 10.0, 10.0),
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            ..default()
+        },
         ..default()
     });
 

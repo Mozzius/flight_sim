@@ -254,6 +254,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_atmosphere"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e0317265a46bc7623565041605e6ca807ce0ed7f2f7cec63628f2d970ac0bcb"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_audio"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1322,9 +1331,10 @@ checksum = "279fb028e20b3c4c320317955b77c5e0c9701f05a1d309905d6fc702cdc5053e"
 
 [[package]]
 name = "flight_sim"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "bevy",
+ "bevy_atmosphere",
  "rand",
 ]
 

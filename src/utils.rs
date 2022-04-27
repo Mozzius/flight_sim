@@ -23,18 +23,6 @@ pub fn clamp(x: f32, min: f32, max: f32) -> f32 {
     return x;
 }
 
-pub fn get_rotation_between(u: Vec3, v: Vec3) -> Quat {
-    let add = u.normalize() + v.normalize();
-    let angle = add.dot(v);
-    let mut axis = add.cross(v);
-    if axis.length() < 0.00001 {
-        axis = Vec3::Z;
-    } else {
-        axis = axis.normalize()
-    }
-    return Quat::from_axis_angle(axis, angle);
-}
-
 pub fn find_closest_target(targets: Vec<(Entity, &Transform)>, position: Vec3) -> Option<Entity> {
     let mut closest_enemy = None;
     let mut closest_distance = std::f32::MAX;
