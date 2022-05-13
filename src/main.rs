@@ -77,7 +77,7 @@ fn main() {
             ..default()
         })
         .insert_resource(Msaa { samples: 4 })
-        .insert_resource(bevy_atmosphere::AtmosphereMat {
+        .insert_resource(AtmosphereMat {
             sun_position: Vec3::new(4.0, 10.0, 10.0),
             ..default()
         })
@@ -87,7 +87,7 @@ fn main() {
             brightness: 1.0 / 5.0,
         })
         .add_plugins(DefaultPlugins)
-        .add_plugin(bevy_atmosphere::AtmospherePlugin {
+        .add_plugin(AtmospherePlugin {
             dynamic: false,
             sky_radius: 1000000.0,
         })

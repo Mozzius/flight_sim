@@ -3,7 +3,7 @@ use bevy::{
     prelude::*,
 };
 
-use super::{Controls, Player};
+use super::{Camera3d, Controls, Enemy, Player};
 
 #[derive(Component)]
 struct FpsText;
@@ -14,6 +14,9 @@ struct StallWarningText;
 #[derive(Component)]
 struct SpeedText;
 
+#[derive(Component)]
+struct Reticule(Entity);
+
 pub struct HUDPlugin;
 
 impl Plugin for HUDPlugin {
@@ -22,6 +25,7 @@ impl Plugin for HUDPlugin {
             .add_startup_system(setup)
             .add_system(stall_warning_system)
             .add_system(speed_system)
+            // .add_system(reticule_system)
             .add_system(fps_system);
     }
 }
@@ -187,5 +191,35 @@ fn stall_warning_system(
 fn speed_system(mut text_query: Query<&mut Text, With<SpeedText>>, controls: Res<Controls>) {
     for mut text in text_query.iter_mut() {
         text.sections[1].value = format!("{:.0}", controls.thrust);
+    }
+}
+
+fn reticule_system(
+    windows: Res<Windows>,
+    mut reticule_query: Query<(&mut Style, &Reticule)>,
+    targets_query: Query<&GlobalTransform, With<Enemy>>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<Camera3d>>,
+    images: Res<Assets<Image>>,
+) {
+    let (camera, camera_transform) = camera_query.single();
+    for (mut style, reticule) in reticule_query.iter_mut() {
+        if let Ok(transform) = targets_query.get(reticule.0) {
+            match camera.world_to_screen(&windows, &images, camera_transform, transform.translation)
+            {
+                Some(screen_position) => {
+                    style.display = Display::Flex;
+                    style.position = Rect {
+                        left: Val::Px(screen_position.x),
+                        top: Val::Px(screen_position.y),
+                        ..default()
+                    };
+                }
+                None => {
+                    style.display = Display::None;
+                }
+            }
+        } else {
+            warn!("Could not find reticule for target");
+        }
     }
 }
